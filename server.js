@@ -6,6 +6,7 @@ const authRoutes = require("./routes/authRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const auditPdfRoutes = require("./routes/auditPdfRoutes");
+const aiAprRoutes = require("./routes/aiAprRoutes");
 
 const app = express();
 
@@ -66,6 +67,12 @@ app.use(
   "/api/pdf",
   auditPdfRoutes
 );
+
+app.use(
+  "/api/ai",
+  aiAprRoutes
+);
+
 
 // ======================================
 // TEST ROUTE

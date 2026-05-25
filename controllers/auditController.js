@@ -4,39 +4,33 @@ const db = require("../config/db");
 // CREATE AUDIT
 // ========================================
 
-const createAudit = (
+const createAudit = async (
   req,
   res
 ) => {
 
-  const {
-    company_name,
-    inspector_name,
-    audit_date,
-    checklist,
-  } = req.body;
+  try {
 
-  // =========================
-  // VALIDATION
-  // =========================
+    const {
+      company_name,
+      inspector_name,
+      audit_date,
+      checklist,
+    } = req.body;
 
-  if (
-    !company_name ||
-    !inspector_name ||
-    !checklist
-  ) {
+    if (
+      !company_name ||
+      !inspector_name ||
+      !checklist
+    ) {
 
-    return res.status(400).json({
-      message:
-        "Missing required fields",
-    });
-  }
+      return res.status(400).json({
+        message:
+          "Missing required fields",
+      });
+    }
 
-  // =========================
-  // SAVE
-  // =========================
-
-  const sql = `
+    const sql = `
 INSERT INTO audits
 (
 company_name,
@@ -47,124 +41,119 @@ checklist
 VALUES (?, ?, ?, ?)
 `;
 
-  db.query(
-    sql,
-    [
-      company_name,
-      inspector_name,
-      audit_date,
-      JSON.stringify(checklist),
-    ],
-    (err, result) => {
+    const [result] =
+      await db.query(
+        sql,
+        [
+          company_name,
+          inspector_name,
+          audit_date,
+          JSON.stringify(checklist),
+        ]
+      );
 
-      if (err) {
+    res.status(201).json({
+      message:
+        "Audit saved successfully",
 
-        console.log(err);
+      auditId:
+        result.insertId,
+    });
 
-        return res.status(500).json({
-          message:
-            "Database save failed",
-        });
-      }
+  } catch (err) {
 
-      res.status(201).json({
-        message:
-          "Audit saved successfully",
+    console.log(err);
 
-        auditId:
-          result.insertId,
-      });
-    }
-  );
+    res.status(500).json({
+      message:
+        "Database save failed",
+    });
+  }
 };
 
 // ========================================
 // GET AUDITS
 // ========================================
 
-const getAudits = (
+const getAudits = async (
   req,
   res
 ) => {
 
-  const sql =
-    "SELECT * FROM audits ORDER BY id DESC";
+  try {
 
-  db.query(
-    sql,
-    (err, results) => {
+    const sql =
+      "SELECT * FROM audits ORDER BY id DESC";
 
-      if (err) {
+    const [results] =
+      await db.query(sql);
 
-        console.log(err);
+    const formatted =
+      results.map(
+        (audit) => ({
 
-        return res.status(500).json({
-          message:
-            "Failed to fetch audits",
-        });
-      }
+          ...audit,
 
-      // =========================
-      // SAFE JSON PARSE
-      // =========================
+          checklist:
+            typeof audit.checklist ===
+            "string"
+              ? JSON.parse(
+                  audit.checklist
+                )
+              : audit.checklist,
 
-      const formatted =
-        results.map(
-          (audit) => ({
+        })
+      );
 
-            ...audit,
+    res.json(formatted);
 
-            checklist:
-              typeof audit.checklist ===
-              "string"
-                ? JSON.parse(
-                    audit.checklist
-                  )
-                : audit.checklist,
-          })
-        );
+  } catch (err) {
 
-      res.json(formatted);
-    }
-  );
+    console.log(err);
+
+    res.status(500).json({
+      message:
+        "Failed to fetch audits",
+    });
+  }
 };
 
 // ========================================
 // DELETE AUDIT
 // ========================================
 
-const deleteAudit = (
+const deleteAudit = async (
   req,
   res
 ) => {
 
-  const { id } =
-    req.params;
+  try {
 
-  const sql =
-    "DELETE FROM audits WHERE id = ?";
+    const { id } =
+      req.params;
 
-  db.query(
-    sql,
-    [id],
-    (err) => {
+    const sql =
+      "DELETE FROM audits WHERE id = ?";
 
-      if (err) {
+    await db.query(
+      sql,
+      [id]
+    );
 
-        console.log(err);
+    res.json({
+      message:
+        "Audit deleted successfully",
+    });
 
-        return res.status(500).json({
-          message:
-            "Delete failed",
-        });
-      }
+  } catch (err) {
 
-      res.json({
-        message:
-          "Audit deleted successfully",
-      });
-    }
-  );
+    console.log(err);
+
+    res.status(500).json({
+      message:
+        "Delete failed",
+    });
+  }
 };
 
 // ========================================
