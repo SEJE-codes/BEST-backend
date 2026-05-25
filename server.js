@@ -5,7 +5,7 @@ const path = require("path");
 const authRoutes = require("./routes/authRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
-const auditPdfRoutes = require("./routes/auditPdfRoute");
+const auditPdfRoutes = require("./routes/auditPdfRoutes");
 
 const app = express();
 
