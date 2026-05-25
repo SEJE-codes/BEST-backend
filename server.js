@@ -13,20 +13,20 @@ const app = express();
 // CORS CONFIGURATION
 // ======================================
 
+const allowedOrigins = [
+  "https://best-digital-platform.vercel.app",
+  "http://localhost:5173"
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://best-digital-platform.vercel.app",
-    ],
-
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-    ],
-
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
