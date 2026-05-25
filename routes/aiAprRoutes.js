@@ -238,30 +238,23 @@ INSERT INTO apr_reports
 VALUES (?, ?)
 `;
 
-      db.query(
-        sql,
-        [
-          zone,
-          JSON.stringify(finalTable),
-        ],
-        (err, result) => {
-          if (err) {
-            console.log(err);
+      const [result] =
+  await db.query(
+    sql,
+    [
+      zone,
+      JSON.stringify(finalTable),
+    ]
+  );
 
-            return res.status(500).json({
-              message:
-                "Database save failed",
-            });
-          }
+res.json({
 
-          res.json({
-            reportId:
-              result.insertId,
+  reportId:
+    result.insertId,
 
-            table: finalTable,
-          });
-        }
-      );
+  table: finalTable,
+
+});
     } catch (error) {
       console.log(error);
 
