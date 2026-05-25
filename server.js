@@ -88,7 +88,7 @@ app.get("/", (req, res) => {
 // 404 ROUTE
 // ======================================
 
-app.use("*", (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     message: "Route not found",
   });
