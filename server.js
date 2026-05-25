@@ -18,8 +18,6 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
-import cors from "cors";
-
 app.use(cors({
   origin: [
     "https://best-digital-platform.vercel.app",
