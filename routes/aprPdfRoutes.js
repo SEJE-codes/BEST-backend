@@ -21,51 +21,55 @@ router.get(
       (err, results) => {
 
         if (err) {
+
           console.log(err);
 
           return res.status(500).json({
-            message:
-              "Database error",
+            message: "Database error",
           });
         }
 
-        if (
-          results.length === 0
-        ) {
+        if (results.length === 0) {
+
           return res.status(404).json({
-            message:
-              "Report not found",
+            message: "APR report not found",
           });
         }
 
-        const report =
-          results[0];
+        const report = results[0];
 
-        let data =
-          report.data;
+        let data = report.data;
 
-        // =========================
-        // SAFE JSON
-        // =========================
+        // ====================================
+        // SAFE JSON PARSE
+        // ====================================
 
-        if (
-          typeof data ===
-          "string"
-        ) {
-          data =
-            JSON.parse(data);
+        try {
+
+          if (
+            typeof data === "string"
+          ) {
+
+            data = JSON.parse(data);
+          }
+
+          if (!Array.isArray(data)) {
+            data = [];
+          }
+
+        } catch {
+
+          data = [];
         }
 
-        // =========================
+        // ====================================
         // PDF CONFIG
-        // =========================
+        // ====================================
 
         const doc =
           new PDFDocument({
-            margin: 20,
-            size: "A3",
-            layout:
-              "landscape",
+            margin: 40,
+            size: "A4",
           });
 
         res.setHeader(
@@ -80,18 +84,17 @@ router.get(
 
         doc.pipe(res);
 
-        // =========================
-        // TITLE
-        // =========================
+        // ====================================
+        // HEADER
+        // ====================================
 
         doc
-          .fontSize(18)
-          .fillColor("black")
+          .fontSize(22)
+          .fillColor("#0f172a")
           .text(
-            "TABLEAU APR INDUSTRIEL",
+            "INDUSTRIAL APR REPORT",
             {
-              align:
-                "center",
+              align: "center",
             }
           );
 
@@ -99,352 +102,234 @@ router.get(
 
         doc
           .fontSize(13)
+          .fillColor("black")
           .text(
-            `ZONE : ${report.zone}`
+            `Zone: ${report.zone || "N/A"}`
           );
 
-        doc.moveDown();
-
-        // =========================
-        // TABLE CONFIG
-        // =========================
-
-        const startX = 20;
-        let y = 120;
-
-        const rowHeight = 60;
-
-        const columns = [
-          {
-            title: "N°",
-            width: 35,
-          },
-
-          {
-            title:
-              "Installation",
-            width: 90,
-          },
-
-          {
-            title:
-              "Opération",
-            width: 90,
-          },
-
-          {
-            title:
-              "Produit",
-            width: 80,
-          },
-
-          {
-            title:
-              "Événement",
-            width: 90,
-          },
-
-          {
-            title:
-              "Causes",
-            width: 120,
-          },
-
-          {
-            title:
-              "Phénomène",
-            width: 120,
-          },
-
-          {
-            title:
-              "Conséquences",
-            width: 120,
-          },
-
-          {
-            title:
-              "Risques",
-            width: 80,
-          },
-
-          {
-            title:
-              "Mesures existantes",
-            width: 150,
-          },
-
-          {
-            title:
-              "Risque résiduel",
-            width: 70,
-          },
-
-          {
-            title:
-              "Scénario",
-            width: 55,
-          },
-
-          {
-            title: "F",
-            width: 30,
-          },
-
-          {
-            title: "G",
-            width: 30,
-          },
-
-          {
-            title: "C",
-            width: 30,
-          },
-        ];
-
-        // =========================
-        // DRAW HEADER
-        // =========================
-
-        let x = startX;
-
-        columns.forEach(
-          (col) => {
-
-            doc
-              .rect(
-                x,
-                y,
-                col.width,
-                rowHeight
-              )
-              .fillAndStroke(
-                "#D9D9D9",
-                "black"
-              );
-
-            doc
-              .fillColor(
-                "black"
-              )
-              .fontSize(9)
-              .text(
-                col.title,
-                x + 3,
-                y + 20,
-                {
-                  width:
-                    col.width -
-                    6,
-                  align:
-                    "center",
-                }
-              );
-
-            x += col.width;
-          }
+        doc.text(
+          `Generated: ${new Date().toLocaleString()}`
         );
 
-        y += rowHeight;
+        doc.moveDown(2);
 
-        // =========================
-        // DRAW ROWS
-        // =========================
+        // ====================================
+        // EACH APR BLOCK
+        // ====================================
 
-        doc.font("Helvetica");
         data.forEach(
-          (row) => {
+          (row, index) => {
 
-            let x =
-              startX;
+            // ================================
+            // PAGE BREAK
+            // ================================
 
-            const rowData = [
-
-              row.n,
-
-              `${row.installation}`,
-
-              row.operation,
-
-              row.product,
-
-              row.central_event,
-
-              row.possible_causes,
-
-              row.dangerous_phenomenon,
-
-              row.consequences,
-
-              row.initial_risk,
-
-              Array.isArray(
-  row.existing_measures
-)
-  ? row.existing_measures.join("\n")
-  : typeof row.existing_measures ===
-    "object"
-  ? JSON.stringify(
-      row.existing_measures,
-      null,
-      2
-    )
-  : String(
-      row.existing_measures || ""
-    )
-      .replace(/,/g, "\n")
-      .replace(
-        /[^\x20-\x7EÀ-ÿ\n]/g,
-        ""
-      )
-      .trim(),
-
-              row.residual_risk,
-
-              row.scenario,
-
-              row.F,
-
-              row.G,
-
-              row.C,
-            ];
-
-            rowData.forEach(
-              (
-                cell,
-                index
-              ) => {
-
-                let bgColor =
-                  "white";
-
-                // =====================
-                // RISK COLORS
-                // =====================
-
-                if (
-                  index === 8
-                ) {
-
-                  if (
-                    row.initial_color ===
-                    "GREEN"
-                  )
-                    bgColor =
-                      "#00B050";
-
-                  if (
-                    row.initial_color ===
-                    "YELLOW"
-                  )
-                    bgColor =
-                      "#FFFF00";
-
-                  if (
-                    row.initial_color ===
-                    "ORANGE"
-                  )
-                    bgColor =
-                      "#ED7D31";
-
-                  if (
-                    row.initial_color ===
-                    "RED"
-                  )
-                    bgColor =
-                      "#FF0000";
-                }
-
-                if (
-                  index === 10
-                ) {
-
-                  if (
-                    row.residual_color ===
-                    "GREEN"
-                  )
-                    bgColor =
-                      "#00B050";
-
-                  if (
-                    row.residual_color ===
-                    "YELLOW"
-                  )
-                    bgColor =
-                      "#FFFF00";
-
-                  if (
-                    row.residual_color ===
-                    "ORANGE"
-                  )
-                    bgColor =
-                      "#ED7D31";
-
-                  if (
-                    row.residual_color ===
-                    "RED"
-                  )
-                    bgColor =
-                      "#FF0000";
-                }
-
-                // =====================
-                // CELL
-                // =====================
-
-                doc
-                  .rect(
-                    x,
-                    y,
-                    columns[
-                      index
-                    ].width,
-                    rowHeight
-                  )
-                  .fillAndStroke(
-                    bgColor,
-                    "black"
-                  );
-
-                doc
-                  .fillColor(
-                    "black"
-                  )
-                  .fontSize(8)
-                  .text(
-                    String(
-                      cell || ""
-                    ),
-                    x + 2,
-                    y + 5,
-                    {
-                      width:
-                        columns[
-                          index
-                        ].width - 4,
-                    }
-                  );
-
-                x +=
-                  columns[
-                    index
-                  ].width;
-              }
-            );
-
-            y += rowHeight;
-
-            // =====================
-            // NEW PAGE
-            // =====================
-
-            if (y > 500) {
+            if (doc.y > 650) {
 
               doc.addPage();
-
-              y = 50;
             }
+
+            // ================================
+            // SECTION TITLE
+            // ================================
+
+            doc
+              .roundedRect(
+                35,
+                doc.y,
+                530,
+                28,
+                6
+              )
+              .fill("#2563eb");
+
+            doc
+              .fillColor("white")
+              .fontSize(14)
+              .text(
+                `${index + 1}. ${row.installation || "N/A"}`,
+                50,
+                doc.y - 20
+              );
+
+            doc.moveDown(2);
+
+            // ================================
+            // CONTENT
+            // ================================
+
+            const addField = (
+              title,
+              value
+            ) => {
+
+              if (doc.y > 700) {
+                doc.addPage();
+              }
+
+              doc
+                .fontSize(11)
+                .fillColor("#2563eb")
+                .text(
+                  title,
+                  {
+                    continued: true,
+                  }
+                );
+
+              doc
+                .fillColor("black")
+                .text(
+                  ` ${value || "N/A"}`,
+                  {
+                    width: 500,
+                  }
+                );
+
+              doc.moveDown(0.5);
+            };
+
+            addField(
+              "Operation:",
+              row.operation
+            );
+
+            addField(
+              "Product:",
+              row.product
+            );
+
+            addField(
+              "Central Event:",
+              row.central_event
+            );
+
+            addField(
+              "Possible Causes:",
+              row.possible_causes
+            );
+
+            addField(
+              "Dangerous Phenomenon:",
+              row.dangerous_phenomenon
+            );
+
+            addField(
+              "Consequences:",
+              row.consequences
+            );
+
+            addField(
+              "Risks:",
+              row.risks
+            );
+
+            addField(
+              "Existing Measures:",
+              row.existing_measures
+            );
+
+            // ================================
+            // RISK BOXES
+            // ================================
+
+            const riskColor =
+              (
+                color
+              ) => {
+
+                if (
+                  color === "GREEN"
+                )
+                  return "#16a34a";
+
+                if (
+                  color === "YELLOW"
+                )
+                  return "#eab308";
+
+                if (
+                  color === "ORANGE"
+                )
+                  return "#ea580c";
+
+                return "#dc2626";
+              };
+
+            // INITIAL RISK
+
+            doc
+              .roundedRect(
+                40,
+                doc.y,
+                240,
+                35,
+                8
+              )
+              .fill(
+                riskColor(
+                  row.initial_color
+                )
+              );
+
+            doc
+              .fillColor("white")
+              .fontSize(12)
+              .text(
+                `INITIAL RISK : ${row.initial_risk || "N/A"}`,
+                55,
+                doc.y - 23
+              );
+
+            // RESIDUAL RISK
+
+            doc
+              .roundedRect(
+                320,
+                doc.y - 12,
+                240,
+                35,
+                8
+              )
+              .fill(
+                riskColor(
+                  row.residual_color
+                )
+              );
+
+            doc
+              .fillColor("white")
+              .fontSize(12)
+              .text(
+                `RESIDUAL RISK : ${row.residual_risk || "N/A"}`,
+                335,
+                doc.y - 35
+              );
+
+            doc.moveDown(3);
+
+            // ================================
+            // F G C
+            // ================================
+
+            doc
+              .fillColor("#0f172a")
+              .fontSize(12)
+              .text(
+                `F = ${row.F || 0}   |   G = ${row.G || 0}   |   C = ${row.C || 0}`
+              );
+
+            doc.moveDown(2);
+
+            // LINE
+
+            doc
+              .moveTo(40, doc.y)
+              .lineTo(550, doc.y)
+              .strokeColor("#cbd5e1")
+              .stroke();
+
+            doc.moveDown(2);
           }
         );
 
