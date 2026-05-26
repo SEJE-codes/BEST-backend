@@ -4,338 +4,186 @@ const router = express.Router();
 
 const db = require("../config/db");
 
-const PDFDocument = require("pdfkit");
+const PDFDocument = require("pdfkit-table");
 
 router.get(
   "/export/:id",
-  (req, res) => {
+  async (req, res) => {
 
-    const { id } = req.params;
+    try {
 
-    const sql =
-      "SELECT * FROM apr_reports WHERE id = ?";
+      const { id } = req.params;
 
-    db.query(
-      sql,
-      [id],
-      (err, results) => {
+      const sql =
+        "SELECT * FROM apr_reports WHERE id = ?";
 
-        if (err) {
+      db.query(
+        sql,
+        async (err, results) => {
 
-          console.log(err);
+          if (err) {
 
-          return res.status(500).json({
-            message: "Database error",
-          });
-        }
+            console.log(err);
 
-        if (results.length === 0) {
-
-          return res.status(404).json({
-            message: "APR report not found",
-          });
-        }
-
-        const report = results[0];
-
-        let data = report.data;
-
-        // ====================================
-        // SAFE JSON PARSE
-        // ====================================
-
-        try {
-
-          if (
-            typeof data === "string"
-          ) {
-
-            data = JSON.parse(data);
+            return res.status(500).json({
+              message: "Database error",
+            });
           }
 
-          if (!Array.isArray(data)) {
-            data = [];
+          if (results.length === 0) {
+
+            return res.status(404).json({
+              message: "Report not found",
+            });
           }
 
-        } catch {
+          const report = results[0];
 
-          data = [];
-        }
+          let data =
+            typeof report.data === "string"
+              ? JSON.parse(report.data)
+              : report.data;
 
-        // ====================================
-        // PDF CONFIG
-        // ====================================
+          // =========================
+          // PDF
+          // =========================
 
-        const doc =
-          new PDFDocument({
-            margin: 40,
-            size: "A4",
-          });
+          const doc =
+            new PDFDocument({
+              margin: 20,
+              size: "A3",
+              layout: "landscape",
+            });
 
-        res.setHeader(
-          "Content-Type",
-          "application/pdf"
-        );
-
-        res.setHeader(
-          "Content-Disposition",
-          `attachment; filename=APR_${report.zone}.pdf`
-        );
-
-        doc.pipe(res);
-
-        // ====================================
-        // HEADER
-        // ====================================
-
-        doc
-          .fontSize(22)
-          .fillColor("#0f172a")
-          .text(
-            "INDUSTRIAL APR REPORT",
-            {
-              align: "center",
-            }
+          res.setHeader(
+            "Content-Type",
+            "application/pdf"
           );
 
-        doc.moveDown();
-
-        doc
-          .fontSize(13)
-          .fillColor("black")
-          .text(
-            `Zone: ${report.zone || "N/A"}`
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename=APR_${report.zone}.pdf`
           );
 
-        doc.text(
-          `Generated: ${new Date().toLocaleString()}`
-        );
+          doc.pipe(res);
 
-        doc.moveDown(2);
+          // =========================
+          // TITLE
+          // =========================
 
-        // ====================================
-        // EACH APR BLOCK
-        // ====================================
+          doc
+            .fontSize(20)
+            .fillColor("#0f172a")
+            .text(
+              "TABLEAU APR INDUSTRIEL",
+              {
+                align: "center",
+              }
+            );
 
-        data.forEach(
-          (row, index) => {
+          doc.moveDown();
 
-            // ================================
-            // PAGE BREAK
-            // ================================
+          doc
+            .fontSize(12)
+            .fillColor("black")
+            .text(
+              `ZONE : ${report.zone}`
+            );
 
-            if (doc.y > 650) {
+          doc.moveDown();
 
-              doc.addPage();
-            }
+          // =========================
+          // TABLE
+          // =========================
 
-            // ================================
-            // SECTION TITLE
-            // ================================
+          const table = {
 
-            doc
-              .roundedRect(
-                35,
-                doc.y,
-                530,
-                28,
-                6
-              )
-              .fill("#2563eb");
+            headers: [
 
-            doc
-              .fillColor("white")
-              .fontSize(14)
-              .text(
-                `${index + 1}. ${row.installation || "N/A"}`,
-                50,
-                doc.y - 20
-              );
+              "Bloc",
 
-            doc.moveDown(2);
+              "Installation",
 
-            // ================================
-            // CONTENT
-            // ================================
+              "Operation",
 
-            const addField = (
-              title,
-              value
+              "Produit",
+
+              "Evenement",
+
+              "Causes",
+
+              "Phenomenes",
+
+              "Consequences",
+
+              "Mesures",
+
+              "Initial",
+
+              "Residual",
+            ],
+
+            rows: data.map((row) => [
+
+              row.zone || "",
+
+              row.installation || "",
+
+              row.operation || "",
+
+              row.product || "",
+
+              row.central_event || "",
+
+              row.possible_causes || "",
+
+              row.dangerous_phenomenon || "",
+
+              row.consequences || "",
+
+              row.existing_measures || "",
+
+              row.initial_risk || "",
+
+              row.residual_risk || "",
+            ]),
+          };
+
+          await doc.table(table, {
+
+            width: 1100,
+
+            prepareHeader: () => {
+
+              doc
+                .font("Helvetica-Bold")
+                .fontSize(8);
+            },
+
+            prepareRow: (
+              row,
+              indexColumn,
+              indexRow,
+              rectRow
             ) => {
 
-              if (doc.y > 700) {
-                doc.addPage();
-              }
-
               doc
-                .fontSize(11)
-                .fillColor("#2563eb")
-                .text(
-                  title,
-                  {
-                    continued: true,
-                  }
-                );
+                .font("Helvetica")
+                .fontSize(7);
+            },
+          });
 
-              doc
-                .fillColor("black")
-                .text(
-                  ` ${value || "N/A"}`,
-                  {
-                    width: 500,
-                  }
-                );
+          doc.end();
+        }
+      );
+    } catch (error) {
 
-              doc.moveDown(0.5);
-            };
+      console.log(error);
 
-            addField(
-              "Operation:",
-              row.operation
-            );
-
-            addField(
-              "Product:",
-              row.product
-            );
-
-            addField(
-              "Central Event:",
-              row.central_event
-            );
-
-            addField(
-              "Possible Causes:",
-              row.possible_causes
-            );
-
-            addField(
-              "Dangerous Phenomenon:",
-              row.dangerous_phenomenon
-            );
-
-            addField(
-              "Consequences:",
-              row.consequences
-            );
-
-            addField(
-              "Risks:",
-              row.risks
-            );
-
-            addField(
-              "Existing Measures:",
-              row.existing_measures
-            );
-
-            // ================================
-            // RISK BOXES
-            // ================================
-
-            const riskColor =
-              (
-                color
-              ) => {
-
-                if (
-                  color === "GREEN"
-                )
-                  return "#16a34a";
-
-                if (
-                  color === "YELLOW"
-                )
-                  return "#eab308";
-
-                if (
-                  color === "ORANGE"
-                )
-                  return "#ea580c";
-
-                return "#dc2626";
-              };
-
-            // INITIAL RISK
-
-            doc
-              .roundedRect(
-                40,
-                doc.y,
-                240,
-                35,
-                8
-              )
-              .fill(
-                riskColor(
-                  row.initial_color
-                )
-              );
-
-            doc
-              .fillColor("white")
-              .fontSize(12)
-              .text(
-                `INITIAL RISK : ${row.initial_risk || "N/A"}`,
-                55,
-                doc.y - 23
-              );
-
-            // RESIDUAL RISK
-
-            doc
-              .roundedRect(
-                320,
-                doc.y - 12,
-                240,
-                35,
-                8
-              )
-              .fill(
-                riskColor(
-                  row.residual_color
-                )
-              );
-
-            doc
-              .fillColor("white")
-              .fontSize(12)
-              .text(
-                `RESIDUAL RISK : ${row.residual_risk || "N/A"}`,
-                335,
-                doc.y - 35
-              );
-
-            doc.moveDown(3);
-
-            // ================================
-            // F G C
-            // ================================
-
-            doc
-              .fillColor("#0f172a")
-              .fontSize(12)
-              .text(
-                `F = ${row.F || 0}   |   G = ${row.G || 0}   |   C = ${row.C || 0}`
-              );
-
-            doc.moveDown(2);
-
-            // LINE
-
-            doc
-              .moveTo(40, doc.y)
-              .lineTo(550, doc.y)
-              .strokeColor("#cbd5e1")
-              .stroke();
-
-            doc.moveDown(2);
-          }
-        );
-
-        doc.end();
-      }
-    );
+      res.status(500).json({
+        message: "PDF generation failed",
+      });
+    }
   }
 );
 
