@@ -1,57 +1,48 @@
 const express = require("express");
+const multer = require("multer");
 
 const router = express.Router();
 
-const multer = require("multer");
+// STORAGE
+const storage = multer.diskStorage({
 
-const cloudinary =
-  require("../config/cloudinary");
+  destination: function (
+    req,
+    file,
+    cb
+  ) {
 
-const {
-  CloudinaryStorage,
-} = require(
-  "multer-storage-cloudinary"
-);
+    cb(null, "uploads/");
+  },
 
-const storage =
-  new CloudinaryStorage({
-    cloudinary,
+  filename: function (
+    req,
+    file,
+    cb
+  ) {
 
-    params: {
-      folder: "qshe-audits",
+    cb(
+      null,
+      Date.now() +
+        "-" +
+        file.originalname
+    );
+  },
 
-      allowed_formats: [
-        "jpg",
-        "jpeg",
-        "png",
-      ],
-    },
-  });
+});
 
 const upload =
   multer({ storage });
 
+// POST IMAGE
 router.post(
   "/",
   upload.single("image"),
-  async (req, res) => {
+  (req, res) => {
 
-    try {
-
-      res.json({
-        image:
-          req.file.path,
-      });
-
-    } catch (error) {
-
-      console.log(error);
-
-      res.status(500).json({
-        message:
-          "Upload failed",
-      });
-    }
+    res.json({
+      image: req.file.filename,
+    });
   }
 );
 
