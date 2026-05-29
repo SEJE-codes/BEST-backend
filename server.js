@@ -69,8 +69,8 @@ app.use(
 );
 
 app.use(
-  "/api/upload",
-  uploadRoutes
+  "/uploads",
+  express.static("uploads")
 );
 
 app.use(
