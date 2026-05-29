@@ -4,6 +4,7 @@ const multer = require("multer");
 const router = express.Router();
 
 // STORAGE
+
 const storage = multer.diskStorage({
 
   destination: function (
@@ -34,14 +35,20 @@ const storage = multer.diskStorage({
 const upload =
   multer({ storage });
 
-// POST IMAGE
+// UPLOAD IMAGE
+
 router.post(
   "/",
   upload.single("image"),
   (req, res) => {
 
+    // VERY IMPORTANT
+
+    const imagePath =
+      `uploads/${req.file.filename}`;
+
     res.json({
-      image: req.file.filename,
+      image: imagePath,
     });
   }
 );
