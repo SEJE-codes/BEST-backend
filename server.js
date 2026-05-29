@@ -47,18 +47,6 @@ app.use(express.urlencoded({ extended: true }));
 // STATIC FOLDERS
 // ======================================
 
-const express =
-  require("express");
-
-const path =
-  require("path");
-
-const uploadRoutes =
-  require("./routes/uploadRoutes");
-
-const app = express();
-
-// STATIC FOLDER
 app.use(
   "/uploads",
   express.static(
