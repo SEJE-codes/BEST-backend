@@ -27,7 +27,8 @@
     "openai": "^6.37.0",
     "pdf": "^0.1.0",
     "pdfkit": "^0.18.0",
-    "pdfkit-table": "^0.1.99"
+    "pdfkit-table": "^0.1.99",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

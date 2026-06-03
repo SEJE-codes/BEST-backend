@@ -5,6 +5,8 @@ const router = express.Router();
 const db = require("../config/db");
 
 const PDFDocument = require("pdfkit-table");
+const fs = require("fs");
+const path = require("path");
 
 router.get(
   "/export/:id",
@@ -66,6 +68,32 @@ router.get(
           );
 
           doc.pipe(res);
+
+          const logoPath =
+  path.join(
+    __dirname,
+    "..",
+    "uploads",
+    "best.png"
+  );
+
+if (
+  fs.existsSync(
+    logoPath
+  )
+) {
+
+  doc.image(
+    logoPath,
+    20,
+    15,
+    {
+      width: 90
+    }
+  );
+}
+
+doc.moveDown(4);
 
           // =========================
           // TITLE

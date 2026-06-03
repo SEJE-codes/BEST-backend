@@ -1,54 +1,41 @@
 const express = require("express");
 const multer = require("multer");
+const sharp = require("sharp");
+const path = require("path");
 
 const router = express.Router();
 
-// STORAGE
+const storage = multer.memoryStorage();
 
-const storage = multer.diskStorage({
-
-  destination: function (
-    req,
-    file,
-    cb
-  ) {
-
-    cb(null, "uploads/");
-  },
-
-  filename: function (
-    req,
-    file,
-    cb
-  ) {
-
-    cb(
-      null,
-      Date.now() +
-        "-" +
-        file.originalname
-    );
-  },
-
+const upload = multer({
+  storage,
 });
-
-const upload =
-  multer({ storage });
-
-// UPLOAD IMAGE
 
 router.post(
   "/",
   upload.single("image"),
-  (req, res) => {
+  async (req, res) => {
 
-    // VERY IMPORTANT
+    const filename =
+      Date.now() + ".jpg";
 
-    const imagePath =
-      `uploads/${req.file.filename}`;
+    const filepath =
+      path.join(
+        "uploads",
+        filename
+      );
+
+    await sharp(req.file.buffer)
+      .resize({
+        width: 1200
+      })
+      .jpeg({
+        quality: 70
+      })
+      .toFile(filepath);
 
     res.json({
-      image: imagePath,
+      image: filename
     });
   }
 );
