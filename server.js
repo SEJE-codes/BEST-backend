@@ -111,6 +111,21 @@ if (!fs.existsSync(uploadsPath)) {
     recursive: true,
   });
 }
+
+app.get("/test-upload", (req, res) => {
+  const fs = require("fs");
+  const path = require("path");
+
+  const uploadPath =
+    path.join(__dirname, "uploads");
+
+  res.json({
+    exists: fs.existsSync(uploadPath),
+    files: fs.existsSync(uploadPath)
+      ? fs.readdirSync(uploadPath)
+      : [],
+  });
+});
 // ======================================
 // SERVER
 // ======================================
