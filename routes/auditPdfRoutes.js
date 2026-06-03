@@ -255,3 +255,5 @@ router.get("/export/:id", async (req, res) => {
   }
 
 });
+
+module.exports = router;
