@@ -1,7 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const sharp = require("sharp");
-const path = require("path");
+const cloudinary = require("../config/cloudinary");
 
 const router = express.Router();
 
@@ -16,27 +15,45 @@ router.post(
   upload.single("image"),
   async (req, res) => {
 
-    const filename =
-      Date.now() + ".jpg";
+    try {
 
-    const filepath =
-      path.join(
-        "uploads",
-        filename
-      );
+      const result =
+        await new Promise(
+          (resolve, reject) => {
 
-    await sharp(req.file.buffer)
-      .resize({
-        width: 1200
-      })
-      .jpeg({
-        quality: 70
-      })
-      .toFile(filepath);
+            cloudinary.uploader.upload_stream(
+              {
+                folder: "best-audits",
+              },
 
-    res.json({
-      image: filename
-    });
+              (error, result) => {
+
+                if (error)
+                  reject(error);
+
+                else
+                  resolve(result);
+              }
+            ).end(
+              req.file.buffer
+            );
+          }
+        );
+
+      res.json({
+        image:
+          result.secure_url,
+      });
+
+    } catch (error) {
+
+      console.log(error);
+
+      res.status(500).json({
+        message:
+          "Upload failed",
+      });
+    }
   }
 );
 
