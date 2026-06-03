@@ -99,19 +99,6 @@ app.get("/", (req, res) => {
 // ======================================
 // 404 ROUTE
 // ======================================
-
-app.use((req, res) => {
-  res.status(404).json({
-    message: "Route not found",
-  });
-});
-
-if (!fs.existsSync(uploadsPath)) {
-  fs.mkdirSync(uploadsPath, {
-    recursive: true,
-  });
-}
-
 app.get("/test-upload", (req, res) => {
   const fs = require("fs");
   const path = require("path");
@@ -126,6 +113,21 @@ app.get("/test-upload", (req, res) => {
       : [],
   });
 });
+
+app.get("/test", (req, res) => {
+  res.send("Backend OK");
+});
+app.use((req, res) => {
+  res.status(404).json({
+    message: "Route not found",
+  });
+});
+
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, {
+    recursive: true,
+  });
+}
 // ======================================
 // SERVER
 // ======================================
