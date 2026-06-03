@@ -33,6 +33,10 @@ router.get("/export/:id", async (req, res) => {
       }
 
       const audit = results[0];
+      console.log(
+  "CHECKLIST:",
+  JSON.stringify(audit.checklist).slice(0, 500)
+);
 
       let checklist = [];
 
@@ -70,29 +74,11 @@ router.get("/export/:id", async (req, res) => {
       // LOGO
       // =====================
 
-      const logoPath =
-        path.join(
-          __dirname,
-          "..",
-          "uploads",
-          "best.png"
-        );
-
       if (
         fs.existsSync(
           logoPath
         )
-      ) {
-
-        doc.image(
-          logoPath,
-          50,
-          20,
-          {
-            width: 80,
-          }
-        );
-      }
+      )
 
       doc.moveDown(4);
 
@@ -169,47 +155,15 @@ router.get("/export/:id", async (req, res) => {
 
               // IMAGE
 
-              if (
-                inspection.image
-              ) {
+              if (inspection.image) {
 
-                try {
+  doc
+    .fillColor("blue")
+    .text(
+      `Image URL: ${inspection.image}`
+    );
 
-                  const imagePath =
-                    path.join(
-                      __dirname,
-                      "..",
-                      "uploads",
-                      inspection.image
-                    );
-
-                  if (
-                    fs.existsSync(
-                      imagePath
-                    )
-                  ) {
-
-                    doc.image(
-                      imagePath,
-                      {
-                        fit: [
-                          180,
-                          140,
-                        ],
-                        align:
-                          "center",
-                      }
-                    );
-                  }
-
-                } catch (err) {
-
-                  console.log(
-                    "Image loading error:",
-                    err.message
-                  );
-                }
-              }
+}
 
               doc.moveDown(0.5);
 

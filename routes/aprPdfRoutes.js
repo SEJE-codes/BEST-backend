@@ -41,6 +41,11 @@ router.get(
 
           const report = results[0];
 
+          console.log(
+  "APR ROWS:",
+  JSON.parse(report.data).length
+);
+
           let data =
             typeof report.data === "string"
               ? JSON.parse(report.data)
