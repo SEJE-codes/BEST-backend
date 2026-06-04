@@ -2,11 +2,13 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const PDFDocument = require("pdfkit");
-const fs = require("fs");
-const path = require("path");
 
 router.get("/export/:id", async (req, res) => {
+
+  console.log("=================================");
   console.log("PDF route hit");
+  console.log("Audit ID:", req.params.id);
+  console.log("=================================");
 
   try {
 
@@ -15,201 +17,229 @@ router.get("/export/:id", async (req, res) => {
     const sql =
       "SELECT * FROM audits WHERE id = ?";
 
-    db.query(sql, [id], (err, results) => {
+    const [results] =
+      await db.query(sql, [id]);
 
-      if (err) {
+    console.log("Query completed");
+    console.log("Rows:", results.length);
 
-        console.log(err);
+    if (results.length === 0) {
 
-        return res.status(500).json({
-          message: "Database error",
-        });
-      }
+      console.log("Audit not found");
 
-      if (results.length === 0) {
+      return res.status(404).json({
+        message: "Audit not found",
+      });
+    }
 
-        return res.status(404).json({
-          message: "Audit not found",
-        });
-      }
+    const audit = results[0];
 
-      const audit = results[0];
-      console.log(
-  "CHECKLIST:",
-  JSON.stringify(audit.checklist).slice(0, 500)
-);
+    console.log("Audit loaded");
 
-      let checklist = [];
+    let checklist = [];
 
-      try {
+    try {
 
-        checklist =
-          typeof audit.checklist === "string"
-            ? JSON.parse(audit.checklist)
-            : audit.checklist;
+      checklist =
+        typeof audit.checklist === "string"
+          ? JSON.parse(audit.checklist)
+          : audit.checklist;
 
-      } catch {
-
+      if (!Array.isArray(checklist)) {
         checklist = [];
       }
 
-      const doc =
-        new PDFDocument({
-          margin: 30,
-          size: "A4",
-        });
+    } catch (err) {
 
-      res.setHeader(
-        "Content-Type",
-        "application/pdf"
+      console.log(
+        "Checklist parse error:",
+        err.message
       );
 
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename=audit_${audit.id}.pdf`
-      );
+      checklist = [];
+    }
 
-      doc.pipe(res);
-
-      // =====================
-      // LOGO
-      // =====================
-
-      if (
-        fs.existsSync(
-          logoPath
-        )
-      )
-
-      doc.moveDown(4);
-
-      // =====================
-      // HEADER
-      // =====================
-
-      doc
-        .fontSize(22)
-        .fillColor("#0f172a")
-        .text(
-          "QSHE AUDIT REPORT",
-          {
-            align: "center",
-          }
-        );
-
-      doc.moveDown();
-
-      doc
-        .fontSize(12)
-        .fillColor("black")
-        .text(
-          `Company: ${audit.company_name}`
-        );
-
-      doc.text(
-        `Inspector: ${audit.inspector_name}`
-      );
-
-      doc.text(
-        `Date: ${
-          audit.audit_date
-            ? new Date(
-                audit.audit_date
-              ).toLocaleString()
-            : "N/A"
-        }`
-      );
-
-      doc.moveDown(2);
-
-      // =====================
-      // CHECKLIST
-      // =====================
-
-      checklist.forEach(
-        (
-          item,
-          equipmentIndex
-        ) => {
-
-          doc
-            .fontSize(16)
-            .fillColor("#2563eb")
-            .text(
-              `${equipmentIndex + 1}. ${item.equipment}`
-            );
-
-          doc.moveDown();
-
-          item.inspections?.forEach(
-            (
-              inspection,
-              inspectionIndex
-            ) => {
-
-              if (
-                doc.y > 650
-              ) {
-
-                doc.addPage();
-              }
-
-              // IMAGE
-
-              if (inspection.image) {
-
-  doc
-    .fillColor("blue")
-    .text(
-      `Image URL: ${inspection.image}`
+    console.log("Checklist parsed");
+    console.log(
+      "Equipment count:",
+      checklist.length
     );
 
-}
+    console.log("Creating PDF");
 
-              doc.moveDown(0.5);
+    const doc =
+      new PDFDocument({
+        margin: 30,
+        size: "A4",
+      });
 
-              doc
-                .fontSize(11)
-                .fillColor(
-                  "black"
-                )
-                .text(
-                  `Comment: ${
-                    inspection.comment ||
-                    "No comment"
-                  }`
-                );
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
 
-              doc.text(
-                `Date: ${
-                  inspection.datetime ||
-                  "N/A"
-                }`
-              );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=audit_${audit.id}.pdf`
+    );
 
-              doc.moveDown();
-            }
-          );
+    doc.pipe(res);
 
-          doc.moveDown();
+    // =====================
+    // HEADER
+    // =====================
+
+    doc
+      .fontSize(22)
+      .fillColor("#0f172a")
+      .text(
+        "QSHE AUDIT REPORT",
+        {
+          align: "center",
         }
       );
 
-      doc.end();
+    doc.moveDown();
 
-    });
-    console.log("Audit ID:", id);
+    doc
+      .fontSize(12)
+      .fillColor("black")
+      .text(
+        `Company: ${audit.company_name}`
+      );
+
+    doc.text(
+      `Inspector: ${audit.inspector_name}`
+    );
+
+    doc.text(
+      `Date: ${
+        audit.audit_date
+          ? new Date(
+              audit.audit_date
+            ).toLocaleString()
+          : "N/A"
+      }`
+    );
+
+    doc.moveDown(2);
+
+    console.log(
+      "Starting checklist loop"
+    );
+
+    // =====================
+    // CHECKLIST
+    // =====================
+
+    checklist.forEach(
+      (
+        item,
+        equipmentIndex
+      ) => {
+
+        console.log(
+          "Equipment:",
+          item.equipment
+        );
+
+        doc
+          .fontSize(16)
+          .fillColor("#2563eb")
+          .text(
+            `${equipmentIndex + 1}. ${item.equipment}`
+          );
+
+        doc.moveDown();
+
+        item.inspections?.forEach(
+          (
+            inspection,
+            inspectionIndex
+          ) => {
+
+            console.log(
+              "Inspection:",
+              inspectionIndex + 1
+            );
+
+            console.log(
+              "Image URL:",
+              inspection.image
+            );
+
+            if (
+              doc.y > 650
+            ) {
+              doc.addPage();
+            }
+
+            // ===================================
+            // IMAGE TEMPORARILY DISABLED
+            // ===================================
+
+            if (
+              inspection.image
+            ) {
+
+              console.log(
+                "Image skipped for debugging"
+              );
+
+            }
+
+            doc.moveDown(0.5);
+
+            doc
+              .fontSize(11)
+              .fillColor(
+                "black"
+              )
+              .text(
+                `Comment: ${
+                  inspection.comment ||
+                  "No comment"
+                }`
+              );
+
+            doc.text(
+              `Date: ${
+                inspection.datetime ||
+                "N/A"
+              }`
+            );
+
+            doc.moveDown();
+          }
+        );
+
+        doc.moveDown();
+      }
+    );
+
+    console.log("Ending PDF");
+
+    doc.end();
+
+    console.log(
+      "PDF finished successfully"
+    );
 
   } catch (error) {
+
+    console.log(
+      "PDF ERROR:"
+    );
 
     console.log(error);
 
     res.status(500).json({
       message:
         "PDF generation failed",
+      error:
+        error.message,
     });
   }
-
 });
 
 module.exports = router;
