@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 
 router.get("/export/:id", async (req, res) => {
+  console.log("PDF route hit");
 
   try {
 
@@ -197,6 +198,7 @@ router.get("/export/:id", async (req, res) => {
       doc.end();
 
     });
+    console.log("Audit ID:", id);
 
   } catch (error) {
 
