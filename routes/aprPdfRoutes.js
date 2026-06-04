@@ -1,198 +1,235 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const PDFDocument = require("pdfkit-table");
+const puppeteer = require("puppeteer");
 
 router.get("/export/:id", async (req, res) => {
-
-  console.log("=================================");
-  console.log("APR PDF route hit");
-  console.log("Report ID:", req.params.id);
-  console.log("=================================");
 
   try {
 
     const { id } = req.params;
 
-    const sql =
-      "SELECT * FROM apr_reports WHERE id = ?";
-
     const [results] =
-      await db.query(sql, [id]);
-
-    console.log("Query completed");
-    console.log("Rows:", results.length);
+      await db.query(
+        "SELECT * FROM apr_reports WHERE id = ?",
+        [id]
+      );
 
     if (results.length === 0) {
 
-      console.log("APR report not found");
-
       return res.status(404).json({
-        message: "Report not found",
+        message: "Report not found"
       });
     }
 
     const report = results[0];
 
-    console.log("APR report loaded");
+    const data =
+      typeof report.data === "string"
+        ? JSON.parse(report.data)
+        : report.data;
 
-    let data = [];
-
-    try {
-
-      data =
-        typeof report.data === "string"
-          ? JSON.parse(report.data)
-          : report.data;
-
-      if (!Array.isArray(data)) {
-        data = [];
-      }
-
-    } catch (err) {
-
-      console.log(
-        "JSON parse error:",
-        err.message
-      );
-
-      data = [];
-    }
-
-    console.log(
-      "Rows in APR:",
-      data.length
-    );
-
-    const doc =
-      new PDFDocument({
-        margin: 20,
-        size: "A3",
-        layout: "landscape",
+    const browser =
+      await puppeteer.launch({
+        headless: true,
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox"
+        ]
       });
 
-    res.setHeader(
-      "Content-Type",
-      "application/pdf"
-    );
+    const page =
+      await browser.newPage();
 
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=APR_${id}.pdf`
-    );
+    const rows =
+      data.map(row => {
 
-    doc.pipe(res);
+        return `
+          <tr>
 
-    // =========================
-    // TITLE
-    // =========================
+            <td>${row.bloc || ""}</td>
 
-    doc
-      .fontSize(20)
-      .text(
-        "TABLEAU APR INDUSTRIEL",
-        {
-          align: "center",
-        }
-      );
+            <td>${row.installation || ""}</td>
 
-    doc.moveDown();
+            <td>${row.operation || ""}</td>
 
-    doc
-      .fontSize(12)
-      .text(
-        `Zone : ${report.zone || "N/A"}`
-      );
+            <td>${row.product || ""}</td>
 
-    doc.moveDown();
+            <td>${row.central_event || ""}</td>
 
-    console.log(
-      "Creating APR table"
-    );
+            <td>${row.possible_causes || ""}</td>
 
-    const table = {
+            <td>${row.dangerous_phenomenon || ""}</td>
 
-      headers: [
+            <td>${row.consequences || ""}</td>
 
-        "Bloc",
-        "Installation",
-        "Operation",
-        "Produit",
-        "Evenement",
-        "Causes",
-        "Phenomenes",
-        "Consequences",
-        "Mesures",
-        "Initial",
-        "Residual"
+            <td>${row.initial_risk || ""}</td>
 
-      ],
+            <td>${row.existing_measures || ""}</td>
 
-      rows: data.map((row) => [
+            <td
+              style="
+                background:${getColor(
+                  row.residual_color
+                )};
+              "
+            >
+            </td>
 
-        row.bloc || "",
-        row.installation || "",
-        row.operation || "",
-        row.product || "",
-        row.central_event || "",
-        row.possible_causes || "",
-        row.dangerous_phenomenon || "",
-        row.consequences || "",
-        row.existing_measures || "",
-        row.initial_risk || "",
-        row.residual_risk || ""
+            <td>${row.scenario || ""}</td>
 
-      ])
-    };
+          </tr>
+        `;
+      }).join("");
 
-    await doc.table(table, {
+    const html = `
 
-      width: 1100,
+      <html>
 
-      prepareHeader: () => {
+      <head>
 
-        doc
-          .font("Helvetica-Bold")
-          .fontSize(8);
+      <style>
 
-      },
+      body{
+        font-family:Arial;
+        font-size:10px;
+      }
 
-      prepareRow: () => {
+      h1{
+        text-align:center;
+      }
 
-        doc
-          .font("Helvetica")
-          .fontSize(7);
+      table{
+
+        width:100%;
+        border-collapse:collapse;
 
       }
 
+      th{
+
+        background:#e6dcc0;
+
+      }
+
+      td,th{
+
+        border:1px solid black;
+        padding:5px;
+        vertical-align:top;
+
+      }
+
+      .risk{
+        width:30px;
+      }
+
+      </style>
+
+      </head>
+
+      <body>
+
+      <h1>
+        TABLEAU APR INDUSTRIEL
+      </h1>
+
+      <table>
+
+      <thead>
+
+      <tr>
+
+        <th>N°</th>
+        <th>Installation</th>
+        <th>Opérations</th>
+        <th>Produit</th>
+        <th>Évènement</th>
+        <th>Causes</th>
+        <th>Phénomène</th>
+        <th>Conséquences</th>
+        <th>Risque</th>
+        <th>Mesures existantes</th>
+        <th>Rr</th>
+        <th>Scénario</th>
+
+      </tr>
+
+      </thead>
+
+      <tbody>
+
+      ${rows}
+
+      </tbody>
+
+      </table>
+
+      </body>
+
+      </html>
+
+    `;
+
+    await page.setContent(html, {
+      waitUntil: "networkidle0"
     });
 
-    console.log(
-      "APR table generated"
-    );
+    const pdf =
+      await page.pdf({
 
-    doc.end();
+        format: "A3",
 
-    console.log(
-      "APR PDF finished successfully"
-    );
+        landscape: true,
+
+        printBackground: true
+
+      });
+
+    await browser.close();
+
+    res.set({
+      "Content-Type":
+        "application/pdf",
+
+      "Content-Disposition":
+        `attachment; filename=APR_${id}.pdf`
+    });
+
+    res.send(pdf);
 
   } catch (error) {
-
-    console.log(
-      "APR PDF ERROR:"
-    );
 
     console.log(error);
 
     res.status(500).json({
       message:
-        "APR PDF generation failed",
-      error:
-        error.message,
+        "PDF generation failed"
     });
   }
-
 });
+
+function getColor(color) {
+
+  switch (
+    String(color).toUpperCase()
+  ) {
+
+    case "GREEN":
+      return "#00b050";
+
+    case "YELLOW":
+      return "#ffff00";
+
+    case "ORANGE":
+      return "#ffc000";
+
+    case "RED":
+      return "#ff0000";
+
+    default:
+      return "white";
+  }
+}
 
 module.exports = router;
