@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const PDFDocument = require("pdfkit");
+const PDFDocument = require("pdfkit-table");
 
 router.get("/export/:id", async (req, res) => {
 
@@ -64,12 +64,11 @@ router.get("/export/:id", async (req, res) => {
       data.length
     );
 
-    console.log("Creating PDF");
-
     const doc =
       new PDFDocument({
-        margin: 30,
-        size: "A4",
+        margin: 20,
+        size: "A3",
+        layout: "landscape",
       });
 
     res.setHeader(
@@ -85,13 +84,13 @@ router.get("/export/:id", async (req, res) => {
     doc.pipe(res);
 
     // =========================
-    // HEADER
+    // TITLE
     // =========================
 
     doc
-      .fontSize(22)
+      .fontSize(20)
       .text(
-        "APR REPORT",
+        "TABLEAU APR INDUSTRIEL",
         {
           align: "center",
         }
@@ -102,88 +101,75 @@ router.get("/export/:id", async (req, res) => {
     doc
       .fontSize(12)
       .text(
-        `Zone: ${report.zone || "N/A"}`
+        `Zone : ${report.zone || "N/A"}`
       );
 
-    doc.moveDown(2);
+    doc.moveDown();
 
     console.log(
-      "Starting APR rows loop"
+      "Creating APR table"
     );
 
-    // =========================
-    // ROWS
-    // =========================
+    const table = {
 
-    data.forEach(
-      (row, index) => {
+      headers: [
 
-        console.log(
-          "APR row:",
-          index + 1
-        );
+        "Bloc",
+        "Installation",
+        "Operation",
+        "Produit",
+        "Evenement",
+        "Causes",
+        "Phenomenes",
+        "Consequences",
+        "Mesures",
+        "Initial",
+        "Residual"
 
-        if (doc.y > 700) {
-          doc.addPage();
-        }
+      ],
+
+      rows: data.map((row) => [
+
+        row.bloc || "",
+        row.installation || "",
+        row.operation || "",
+        row.product || "",
+        row.central_event || "",
+        row.possible_causes || "",
+        row.dangerous_phenomenon || "",
+        row.consequences || "",
+        row.existing_measures || "",
+        row.initial_risk || "",
+        row.residual_risk || ""
+
+      ])
+    };
+
+    await doc.table(table, {
+
+      width: 1100,
+
+      prepareHeader: () => {
 
         doc
-          .fontSize(14)
-          .text(
-            `Row ${index + 1}`
-          );
+          .font("Helvetica-Bold")
+          .fontSize(8);
+
+      },
+
+      prepareRow: () => {
 
         doc
-          .fontSize(10)
-          .text(
-            `Bloc: ${row.zone || ""}`
-          );
+          .font("Helvetica")
+          .fontSize(7);
 
-        doc.text(
-          `Installation: ${row.installation || ""}`
-        );
-
-        doc.text(
-          `Operation: ${row.operation || ""}`
-        );
-
-        doc.text(
-          `Produit: ${row.product || ""}`
-        );
-
-        doc.text(
-          `Evenement: ${row.central_event || ""}`
-        );
-
-        doc.text(
-          `Causes: ${row.possible_causes || ""}`
-        );
-
-        doc.text(
-          `Phenomenes: ${row.dangerous_phenomenon || ""}`
-        );
-
-        doc.text(
-          `Consequences: ${row.consequences || ""}`
-        );
-
-        doc.text(
-          `Mesures: ${row.existing_measures || ""}`
-        );
-
-        doc.text(
-          `Initial Risk: ${row.initial_risk || ""}`
-        );
-
-        doc.text(
-          `Residual Risk: ${row.residual_risk || ""}`
-        );
-
-        doc.moveDown(2);
       }
-    );
 
-    console.log("Ending APR PDF");
+    });
+
+    console.log(
+      "APR table generated"
+    );
 
     doc.end();
 
@@ -206,6 +192,7 @@ router.get("/export/:id", async (req, res) => {
         error.message,
     });
   }
+
 });
 
 module.exports = router;
