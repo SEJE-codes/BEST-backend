@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const PDFDocument = require("pdfkit");
+const axios = require("axios");
 
 router.get("/export/:id", async (req, res) => {
 
@@ -85,6 +86,19 @@ router.get("/export/:id", async (req, res) => {
 
     doc.pipe(res);
 
+    async function getImageBuffer(url){
+
+  const response =
+    await axios.get(url,{
+      responseType:"arraybuffer"
+    });
+
+  return Buffer.from(
+    response.data,
+    "binary"
+  );
+}
+
     // =====================
     // HEADER
     // =====================
@@ -132,7 +146,7 @@ router.get("/export/:id", async (req, res) => {
     // CHECKLIST
     // =====================
 
-    checklist.forEach(
+    for (const [equipmentIndex, item] of checklist.entries()) {
       (
         item,
         equipmentIndex
@@ -152,7 +166,10 @@ router.get("/export/:id", async (req, res) => {
 
         doc.moveDown();
 
-        item.inspections?.forEach(
+        for (
+  const [inspectionIndex, inspection]
+  of (item.inspections || []).entries()
+) {
           (
             inspection,
             inspectionIndex
@@ -178,15 +195,32 @@ router.get("/export/:id", async (req, res) => {
             // IMAGE TEMPORARILY DISABLED
             // ===================================
 
-            if (
-              inspection.image
-            ) {
+            if(inspection.image){
 
-              console.log(
-                "Image skipped for debugging"
-              );
+  try{
 
-            }
+    const imageBuffer =
+      await getImageBuffer(
+        inspection.image
+      );
+
+    doc.image(
+      imageBuffer,
+      {
+        fit:[200,150]
+      }
+    );
+
+  }catch(err){
+
+    console.log(
+      "Image error",
+      err.message
+    );
+
+  }
+
+}
 
             doc.moveDown(0.5);
 
@@ -211,11 +245,11 @@ router.get("/export/:id", async (req, res) => {
 
             doc.moveDown();
           }
-        );
+        }
 
         doc.moveDown();
       }
-    );
+    }
 
     console.log("Ending PDF");
 
