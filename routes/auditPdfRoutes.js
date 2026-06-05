@@ -147,109 +147,74 @@ router.get("/export/:id", async (req, res) => {
     // =====================
 
     for (const [equipmentIndex, item] of checklist.entries()) {
-      (
-        item,
-        equipmentIndex
-      ) => {
 
-        console.log(
-          "Equipment:",
-          item.equipment
-        );
+  doc
+    .fontSize(16)
+    .fillColor("#2563eb")
+    .text(
+      `${equipmentIndex + 1}. ${item.equipment}`
+    );
 
-        doc
-          .fontSize(16)
-          .fillColor("#2563eb")
-          .text(
-            `${equipmentIndex + 1}. ${item.equipment}`
+  doc.moveDown();
+
+  if (!item.inspections) continue;
+
+  for (const [inspectionIndex, inspection] of item.inspections.entries()) {
+
+    if (doc.y > 650) {
+      doc.addPage();
+    }
+
+    if (inspection.image) {
+
+      try {
+
+        const imageBuffer =
+          await getImageBuffer(
+            inspection.image
           );
 
-        doc.moveDown();
-
-        for (
-  const [inspectionIndex, inspection]
-  of (item.inspections || []).entries()
-) {
-          (
-            inspection,
-            inspectionIndex
-          ) => {
-
-            console.log(
-              "Inspection:",
-              inspectionIndex + 1
-            );
-
-            console.log(
-              "Image URL:",
-              inspection.image
-            );
-
-            if (
-              doc.y > 650
-            ) {
-              doc.addPage();
-            }
-
-            // ===================================
-            // IMAGE TEMPORARILY DISABLED
-            // ===================================
-
-            if(inspection.image){
-
-  try{
-
-    const imageBuffer =
-      await getImageBuffer(
-        inspection.image
-      );
-
-    doc.image(
-      imageBuffer,
-      {
-        fit:[200,150]
-      }
-    );
-
-  }catch(err){
-
-    console.log(
-      "Image error",
-      err.message
-    );
-
-  }
-
-}
-
-            doc.moveDown(0.5);
-
-            doc
-              .fontSize(11)
-              .fillColor(
-                "black"
-              )
-              .text(
-                `Comment: ${
-                  inspection.comment ||
-                  "No comment"
-                }`
-              );
-
-            doc.text(
-              `Date: ${
-                inspection.datetime ||
-                "N/A"
-              }`
-            );
-
-            doc.moveDown();
+        doc.image(
+          imageBuffer,
+          {
+            fit: [200, 150]
           }
-        }
+        );
 
-        doc.moveDown();
+      } catch (err) {
+
+        console.log(
+          "Image error:",
+          err.message
+        );
+
       }
     }
+
+    doc.moveDown(0.5);
+
+    doc
+      .fontSize(11)
+      .fillColor("black")
+      .text(
+        `Comment: ${
+          inspection.comment ||
+          "No comment"
+        }`
+      );
+
+    doc.text(
+      `Date: ${
+        inspection.datetime ||
+        "N/A"
+      }`
+    );
+
+    doc.moveDown();
+  }
+
+  doc.moveDown();
+}
 
     console.log("Ending PDF");
 
