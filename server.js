@@ -17,7 +17,6 @@ const auditRoutes = require("./routes/auditRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const auditPdfRoutes = require("./routes/auditPdfRoutes");
 const aiAprRoutes = require("./routes/aiAprRoutes");
-const aprPdfRoutes = require("./routes/aprPdfRoutes");
 const aprReportsRoutes = require("./routes/aprReportsRoutes");
 const app = express();
 
@@ -78,11 +77,6 @@ app.use(
 app.use(
   "/api/audit-pdf",
   auditPdfRoutes
-);
-
-app.use(
-  "/api/apr-pdf",
-  aprPdfRoutes
 );
 
 app.use(
