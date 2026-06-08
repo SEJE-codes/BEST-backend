@@ -1,0 +1,323 @@
+const express = require("express");
+const router = express.Router();
+
+const PDFDocument = require("pdfkit");
+require("pdfkit-table");
+
+const db = require("../config/db");
+const cloudinary =
+  require("../config/cloudinary");
+
+const streamifier =
+  require("streamifier");
+
+router.get(
+  "/generate/:id",
+  async (req, res) => {
+
+    try {
+
+      const { id } = req.params;
+
+      const [reports] =
+        await db.query(
+          "SELECT * FROM apr_reports WHERE id=?",
+          [id]
+        );
+
+      if (
+        reports.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            message:
+              "Report not found",
+          });
+      }
+
+      const report =
+        reports[0];
+
+      const tableData =
+        typeof report.data ===
+        "string"
+          ? JSON.parse(
+              report.data
+            )
+          : report.data;
+
+      const doc =
+        new PDFDocument({
+          size: "A3",
+          layout:
+            "landscape",
+          margin: 15,
+        });
+
+      const buffers = [];
+
+      doc.on(
+        "data",
+        buffers.push.bind(
+          buffers
+        )
+      );
+
+      doc.fontSize(18);
+
+      doc.text(
+        `APR REPORT - ${report.zone}`,
+        {
+          align:
+            "center",
+        }
+      );
+
+      doc.moveDown();
+
+      const rows =
+        tableData.map(
+          (row) => [
+
+            row.zone || "",
+
+            row.installation ||
+              "",
+
+            row.operation ||
+              "",
+
+            row.product ||
+              "",
+
+            row.central_event ||
+              "",
+
+            row.possible_causes ||
+              "",
+
+            row.dangerous_phenomenon ||
+              "",
+
+            row.consequences ||
+              "",
+
+            row.initial_risk ||
+              "",
+
+            row.existing_measures ||
+              "",
+
+            row.residual_risk ||
+              "",
+
+            row.scenario ||
+              "",
+
+          ]
+        );
+
+      const table = {
+
+        headers: [
+
+          "N°",
+
+          "Installation",
+
+          "Operation",
+
+          "Produit",
+
+          "Event",
+
+          "Causes",
+
+          "Phenomene",
+
+          "Consequences",
+
+          "Risque",
+
+          "Mesures",
+
+          "Risque Residuel",
+
+          "Scenario",
+
+        ],
+
+        rows,
+
+      };
+
+      await doc.table(
+        table,
+        {
+
+          width: 1100,
+
+          prepareHeader:
+            () => {
+
+              doc
+                .font(
+                  "Helvetica-Bold"
+                )
+                .fontSize(
+                  8
+                );
+            },
+
+          prepareRow:
+            (
+              row,
+              i
+            ) => {
+
+              doc
+                .font(
+                  "Helvetica"
+                )
+                .fontSize(
+                  7
+                );
+            },
+
+        }
+      );
+
+      doc.end();
+
+      doc.on(
+        "end",
+        async () => {
+
+          try {
+
+            const pdfBuffer =
+              Buffer.concat(
+                buffers
+              );
+
+            const upload =
+              await new Promise(
+                (
+                  resolve,
+                  reject
+                ) => {
+
+                  const stream =
+                    cloudinary.uploader.upload_stream(
+
+                      {
+                        resource_type:
+                          "raw",
+
+                        folder:
+                          "apr_reports",
+
+                        public_id:
+                          `APR_${id}`,
+
+                        format:
+                          "pdf",
+
+                      },
+
+                      (
+                        error,
+                        result
+                      ) => {
+
+                        if (
+                          error
+                        )
+                          reject(
+                            error
+                          );
+
+                        else
+                          resolve(
+                            result
+                          );
+                      }
+                    );
+
+                  streamifier.createReadStream(
+                    pdfBuffer
+                  )
+                  .pipe(
+                    stream
+                  );
+
+                }
+              );
+
+            await db.query(
+
+              `UPDATE apr_reports
+               SET pdf_url=?
+               WHERE id=?`,
+
+              [
+                upload.secure_url,
+                id,
+              ]
+            );
+
+            res.json({
+
+              message:
+                "PDF generated",
+
+              pdf_url:
+                upload.secure_url,
+
+            });
+
+          } catch (
+            uploadError
+          ) {
+
+            console.log(
+              uploadError
+            );
+
+            res.status(
+              500
+            ).json({
+
+              message:
+                "Cloudinary upload failed",
+
+            });
+
+          }
+
+        }
+      );
+
+    } catch (error) {
+
+      console.log(
+        error
+      );
+
+      res.status(500)
+      .json({
+
+        message:
+          "PDF generation failed",
+
+      });
+
+    }
+
+  }
+);
+
+module.exports =
+  router;

@@ -18,6 +18,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const auditPdfRoutes = require("./routes/auditPdfRoutes");
 const aiAprRoutes = require("./routes/aiAprRoutes");
 const aprReportsRoutes = require("./routes/aprReportsRoutes");
+const aprPdfRoutes = require("./routes/aprPdfRoutes");
 const app = express();
 
 // ======================================
