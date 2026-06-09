@@ -261,10 +261,7 @@ const reportId =
   try {
 
   const backendUrl =
-
-    process.env.RENDER_EXTERNAL_URL ||
-
-    "http://localhost:5000";
+  process.env.BACKEND_URL;
 
   await axios.get(
     `${backendUrl}/api/apr-pdf/generate/${reportId}`
