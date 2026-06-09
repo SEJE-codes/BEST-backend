@@ -201,11 +201,6 @@ const table = {
           try {
 
             const pdfBuffer =
-              Buffer.concat(
-                buffers
-              );
-
-            const pdfBuffer =
   Buffer.concat(buffers);
 
 const fileName =
