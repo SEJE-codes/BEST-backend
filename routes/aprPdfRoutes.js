@@ -206,22 +206,15 @@ const table = {
                 ) => {
 
                   const stream =
-                    cloudinary.uploader.upload_stream(
-
-                      {
-                        resource_type:
-                          "raw",
-
-                        folder:
-                          "apr_reports",
-
-                        public_id:
-                          `APR_${id}`,
-
-                        format:
-                          "pdf",
-
-                      },
+  cloudinary.uploader.upload_stream(
+    {
+      resource_type: "raw",
+      folder: "apr_reports",
+      public_id: `APR_${id}`,
+      format: "pdf",
+      access_mode: "public",
+      overwrite: true,
+    },
 
                       (
                         error,
