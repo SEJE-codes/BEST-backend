@@ -1,89 +1,139 @@
 const express = require("express");
 const router = express.Router();
+
 const db = require("../config/db");
 
 // =========================
 // GET ALL REPORTS
 // =========================
-router.get("/", (req, res) => {
-  const sql =
-    "SELECT * FROM apr_reports ORDER BY created_at DESC";
 
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json(err);
+router.get("/", async (req, res) => {
+
+  try {
+
+    const [results] =
+      await db.query(
+        "SELECT * FROM apr_reports ORDER BY created_at DESC"
+      );
+
     res.json(results);
-  });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Failed to fetch reports",
+    });
+
+  }
+
 });
 
 // =========================
-// GET SINGLE REPORT (VIEW)
+// GET SINGLE REPORT
 // =========================
-router.get("/:id", (req, res) => {
-  const { id } = req.params;
 
-  const sql = "SELECT * FROM apr_reports WHERE id = ?";
+router.get("/:id", async (req, res) => {
 
-  db.query(sql, [id], (err, results) => {
-    if (err) return res.status(500).json(err);
+  try {
+
+    const { id } = req.params;
+
+    const [results] =
+      await db.query(
+        "SELECT * FROM apr_reports WHERE id=?",
+        [id]
+      );
 
     if (results.length === 0) {
+
       return res.status(404).json({
         message: "Report not found",
       });
+
     }
 
     res.json(results[0]);
-  });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Failed to fetch report",
+    });
+
+  }
+
 });
 
 // =========================
 // DELETE REPORT
 // =========================
-router.delete("/:id", (req, res) => {
-  const { id } = req.params;
 
-  const sql = "DELETE FROM apr_reports WHERE id = ?";
+router.delete("/:id", async (req, res) => {
 
-  db.query(sql, [id], (err) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).json({
-        message: "Delete failed",
-      });
-    }
+  try {
+
+    const { id } = req.params;
+
+    await db.query(
+      "DELETE FROM apr_reports WHERE id=?",
+      [id]
+    );
 
     res.json({
       message: "Report deleted successfully",
     });
-  });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Delete failed",
+    });
+
+  }
+
 });
 
 // =========================
-// UPDATE REPORT (EDIT)
+// UPDATE REPORT
 // =========================
-router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const { data } = req.body;
 
-  const sql =
-    "UPDATE apr_reports SET data = ? WHERE id = ?";
+router.put("/:id", async (req, res) => {
 
-  db.query(
-    sql,
-    [JSON.stringify(data), id],
-    (err) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).json({
-          message: "Update failed",
-        });
-      }
+  try {
 
-      res.json({
-        message: "Report updated successfully",
-      });
-    }
-  );
+    const { id } = req.params;
+
+    await db.query(
+
+      "UPDATE apr_reports SET data=? WHERE id=?",
+
+      [
+        JSON.stringify(req.body.data),
+        id,
+      ]
+
+    );
+
+    res.json({
+      message: "Report updated successfully",
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Update failed",
+    });
+
+  }
+
 });
 
 module.exports = router;
