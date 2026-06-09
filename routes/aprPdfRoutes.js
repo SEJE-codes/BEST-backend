@@ -77,117 +77,113 @@ router.get(
 
       doc.moveDown();
 
-      const rows =
-        tableData.map(
-          (row) => [
+      const rows = tableData.map((row) => [
 
-            row.zone || "",
+  row.bloc || "",
 
-            row.installation ||
-              "",
+  row.installation || "",
 
-            row.operation ||
-              "",
+  row.operation || "",
 
-            row.product ||
-              "",
+  row.product || "",
 
-            row.central_event ||
-              "",
+  row.central_event || "",
 
-            row.possible_causes ||
-              "",
+  row.possible_causes || "",
 
-            row.dangerous_phenomenon ||
-              "",
+  row.dangerous_phenomenon || "",
 
-            row.consequences ||
-              "",
+  row.consequences || "",
 
-            row.initial_risk ||
-              "",
+  row.initial_risk || "",
 
-            row.existing_measures ||
-              "",
+  row.existing_measures || "",
 
-            row.residual_risk ||
-              "",
+  row.residual_risk || "",
 
-            row.scenario ||
-              "",
+  row.scenario || ""
 
-          ]
-        );
+]);
 
-      const table = {
+const table = {
 
-        headers: [
+  headers: [
 
-          "N°",
+    "Bloc",
+    "Installation",
+    "Operation",
+    "Produit",
+    "Evenement",
+    "Causes",
+    "Phenomene",
+    "Consequences",
+    "Risque",
+    "Mesures",
+    "Risque Residuel",
+    "Scenario"
 
-          "Installation",
+  ],
 
-          "Operation",
+  rows
 
-          "Produit",
-
-          "Event",
-
-          "Causes",
-
-          "Phenomene",
-
-          "Consequences",
-
-          "Risque",
-
-          "Mesures",
-
-          "Risque Residuel",
-
-          "Scenario",
-
-        ],
-
-        rows,
-
-      };
+};
 
       await doc.table(
-        table,
-        {
+  table,
+  {
 
-          width: 1100,
+    width: 1120,
 
-          prepareHeader:
-            () => {
+    columnsSize: [
 
-              doc
-                .font(
-                  "Helvetica-Bold"
-                )
-                .fontSize(
-                  8
-                );
-            },
+      60,
+      90,
+      90,
+      80,
+      120,
+      120,
+      110,
+      120,
+      70,
+      120,
+      80,
+      60
 
-          prepareRow:
-            (
-              row,
-              i
-            ) => {
+    ],
 
-              doc
-                .font(
-                  "Helvetica"
-                )
-                .fontSize(
-                  7
-                );
-            },
+    prepareHeader: () => {
 
-        }
-      );
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(7);
+
+    },
+
+    prepareRow: (
+      row,
+      indexColumn,
+      indexRow,
+      rectRow
+    ) => {
+
+      doc
+        .font("Helvetica")
+        .fontSize(6);
+
+      doc.rect(
+
+        rectRow.x,
+        rectRow.y,
+
+        rectRow.width,
+        rectRow.height
+
+      ).stroke();
+
+    }
+
+  }
+);
 
       doc.end();
 

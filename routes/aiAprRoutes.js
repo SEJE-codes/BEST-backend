@@ -6,7 +6,7 @@ const OpenAI = require("openai");
 const db = require("../config/db");
 
 const blocsData = require("../data/blocs");
-
+const axios = require("axios");
 const qhseKnowledge =
   require("../data/qhseKnowledge");
 
@@ -93,6 +93,14 @@ Tu dois générer un tableau APR professionnel EXACTEMENT comme les entreprises 
 
 IMPORTANT :
 - UNE SEULE LIGNE PAR BLOC
+IMPORTANT :
+
+bloc = code du bloc (BAT01, BAT02...)
+
+installation = nom réel de l'installation
+(Parking, Atelier mécanique, Réservoir...)
+
+Ne jamais mettre la même valeur dans bloc et installation.
 - Ne jamais répéter BAT01 plusieurs fois
 - Chaque ligne doit regrouper tous les risques importants du bloc
 - Utiliser les données industrielles fournies
@@ -202,10 +210,11 @@ RÈGLES :
         parsed.map((row) => {
           
           const originalBloc =
-      completeBlocs.find(
-        (b) =>
-          b.code === row.installation
-      );
+  completeBlocs.find(
+    (b) =>
+      b.installation ===
+      row.installation
+  );
           
           const scoring =
             calculateRisk(
@@ -247,23 +256,47 @@ VALUES (?, ?)
     ]
   );
 
+const reportId =
+  result.insertId;
+  try {
+
+  const backendUrl =
+
+    process.env.RENDER_EXTERNAL_URL ||
+
+    "http://localhost:5000";
+
+  await axios.get(
+    `${backendUrl}/api/apr-pdf/generate/${reportId}`
+  );
+
+  console.log(
+    "PDF generated automatically"
+  );
+
+} catch (pdfError) {
+
+  console.log(
+    "PDF generation error:",
+    pdfError.message
+  );
+
+}
 res.json({
 
-  reportId:
-    result.insertId,
+  reportId,
 
   table: finalTable,
 
 });
-    } catch (error) {
-      console.log(error);
+ } catch (error) {
 
-      res.status(500).json({
-        message:
-          "APR generation failed",
-      });
-    }
-  }
-);
+  console.log(error);
 
+  res.status(500).json({
+    message: "APR generation failed",
+  });
+
+}
+});   
 module.exports = router;

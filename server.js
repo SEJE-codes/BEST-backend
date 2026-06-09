@@ -90,6 +90,11 @@ app.use(
   aprReportsRoutes
 );
 
+app.use(
+  "/api/apr-pdf",
+  aprPdfRoutes
+);
+
 // ======================================
 // TEST ROUTE
 // ======================================
