@@ -5,12 +5,19 @@ const PDFDocument = require("pdfkit");
 require("pdfkit-table");
 
 const db = require("../config/db");
-const cloudinary =
-  require("../config/cloudinary");
+const fs = require("fs");
+const path = require("path");const pdfFolder = path.join(
+  __dirname,
+  "..",
+  "uploads",
+  "apr"
+);
 
-const streamifier =
-  require("streamifier");
-
+if (!fs.existsSync(pdfFolder)) {
+  fs.mkdirSync(pdfFolder, {
+    recursive: true,
+  });
+}
 router.get(
   "/generate/:id",
   async (req, res) => {
@@ -198,74 +205,38 @@ const table = {
                 buffers
               );
 
-            const upload =
-              await new Promise(
-                (
-                  resolve,
-                  reject
-                ) => {
+            const pdfBuffer =
+  Buffer.concat(buffers);
 
-                  const stream =
-  cloudinary.uploader.upload_stream(
-    {
-      resource_type: "raw",
-      folder: "apr_reports",
-      public_id: `APR_${id}`,
-      format: "pdf",
-      access_mode: "public",
-      overwrite: true,
-    },
+const fileName =
+  `APR_${id}.pdf`;
 
-                      (
-                        error,
-                        result
-                      ) => {
+const filePath =
+  path.join(
+    pdfFolder,
+    fileName
+  );
 
-                        if (
-                          error
-                        )
-                          reject(
-                            error
-                          );
-
-                        else
-                          resolve(
-                            result
-                          );
-                      }
-                    );
-
-                  streamifier.createReadStream(
-                    pdfBuffer
-                  )
-                  .pipe(
-                    stream
-                  );
-
-                }
-              );
-
-            await db.query(
-
-              `UPDATE apr_reports
-               SET pdf_url=?
-               WHERE id=?`,
-
-              [
-                upload.secure_url,
-                id,
-              ]
-            );
+fs.writeFileSync(
+  filePath,
+  pdfBuffer
+);
+const pdfUrl =
+  `https://best-backend-1.onrender.com/uploads/apr/${fileName}`;
+           await db.query(
+  `UPDATE apr_reports
+   SET pdf_url=?
+   WHERE id=?`,
+  [
+    pdfUrl,
+    id,
+  ]
+);
 
             res.json({
-
-              message:
-                "PDF generated",
-
-              pdf_url:
-                upload.secure_url,
-
-            });
+  message: "PDF generated",
+  pdf_url: pdfUrl,
+});
 
           } catch (
             uploadError
