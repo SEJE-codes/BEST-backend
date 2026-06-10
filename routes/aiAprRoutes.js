@@ -206,36 +206,55 @@ RÈGLES :
       // APPLY RISK MATRIX
       // =========================
 
-      const finalTable =
-        parsed.map((row) => {
-          
-          const originalBloc =
-  completeBlocs.find(
-    (b) =>
-      b.installation ===
-      row.installation
-  );
-          
-          const scoring =
-            calculateRisk(
-              row.initial_risk
-            );
+      const finalTable = parsed.map((row) => {
 
-          return {
-            ...row,
+  const originalBloc =
+    completeBlocs.find(
+      (b) =>
+        b.installation ===
+        row.installation
+    );
 
-            existing_measures:
-        originalBloc
-          ?.existing_measures ||
-        row.existing_measures,
+  // =====================
+  // FORCE COLORS
+  // =====================
 
-            F: scoring.F,
+  if (!row.initial_color) {
 
-            G: scoring.G,
+    row.initial_color = "GREEN";
+    row.initial_risk = "GREEN";
 
-            C: scoring.C,
-          };
-        });
+  }
+
+  if (!row.residual_color) {
+
+    row.residual_color =
+      row.initial_color;
+
+    row.residual_risk =
+      row.initial_risk;
+
+  }
+
+  const scoring =
+    calculateRisk(
+      row.initial_color
+    );
+
+  return {
+    ...row,
+
+    existing_measures:
+      originalBloc
+        ?.existing_measures ||
+      row.existing_measures,
+
+    F: scoring.F,
+    G: scoring.G,
+    C: scoring.C,
+  };
+
+});
 
       // =========================
       // SAVE DATABASE
