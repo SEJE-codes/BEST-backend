@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const PDFDocument = require("pdfkit");
-require("pdfkit-table");
+const PDFDocument = require("pdfkit-table");
 
 const db = require("../config/db");
 const fs = require("fs");
@@ -137,7 +136,13 @@ const table = {
   rows
 
 };
+doc.moveDown();
 
+doc.fontSize(12);
+
+doc.text("TEST AVANT TABLE");
+
+doc.moveDown();
       await doc.table(
   table,
   {
