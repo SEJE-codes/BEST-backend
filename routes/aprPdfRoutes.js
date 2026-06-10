@@ -78,16 +78,41 @@ router.get("/generate/:id", async (req, res) => {
         .replace(/\n/g, "\n• "),
       (row.consequences || "")
         .replace(/\n/g, "\n• "),
-      row.initial_risk || "",
+      {
+  type: "risk",
+  value: row.initial_risk || ""
+},
       (row.existing_measures || "")
         .replace(/\t/g, " ")
         .replace(/-\s*/g, "• ")
         .replace(/\n/g, "\n"),
-      row.residual_risk || "",
+      {
+  type: "risk",
+  value: row.residual_risk || ""
+},
       row.scenario || "",
     ]);
 
     console.log("ROWS COUNT:", rows.length);
+    function getRiskColor(risk) {
+  if (!risk) return "#FFFFFF";
+
+  const value = risk.toLowerCase();
+
+  if (value.includes("green") || value.includes("vert"))
+    return "#00B050";
+
+  if (value.includes("yellow") || value.includes("jaune"))
+    return "#FFFF00";
+
+  if (value.includes("orange"))
+    return "#ED7D31";
+
+  if (value.includes("red") || value.includes("rouge"))
+    return "#FF0000";
+
+  return "#FFFFFF";
+}
 
     // ===============================
     // TABLE
@@ -130,27 +155,72 @@ router.get("/generate/:id", async (req, res) => {
         ],
 
         padding: 10, // 🔥 AUGMENTE LA HAUTEUR VISUELLE
-
+        divider: {
+  header: { disabled: false, width: 1 },
+  horizontal: { disabled: false, width: 1 },
+  vertical: { disabled: false, width: 1 }
+},
         prepareHeader: () => {
           doc.font("Helvetica-Bold").fontSize(9);
         },
 
         prepareRow: (row, indexColumn, indexRow, rectRow) => {
-          doc.font("Helvetica").fontSize(8);
+  doc
+    .font("Helvetica")
+    .fontSize(8);
 
-          // ===============================
-          // 🔥 BORDER COMPLET (RECTANGLE)
-          // ===============================
-          doc
-            .lineWidth(1)
-            .rect(
-              rectRow.x,
-              rectRow.y,
-              rectRow.width,
-              rectRow.height
-            )
-            .stroke();
-        },
+  const riskColumn = 8;
+const residualRiskColumn = 10;
+
+if (
+  indexColumn === riskColumn &&
+  row[indexColumn]?.type === "risk"
+) {
+  doc
+    .fillColor(
+      getRiskColor(row[indexColumn].value)
+    )
+    .rect(
+      rectRow.x + 5,
+      rectRow.y + 5,
+      rectRow.width - 10,
+      rectRow.height - 10
+    )
+    .fill();
+
+  doc.fillColor("black");
+}
+
+if (
+  indexColumn === residualRiskColumn &&
+  row[indexColumn]?.type === "risk"
+) {
+  doc
+    .fillColor(
+      getRiskColor(row[indexColumn].value)
+    )
+    .rect(
+      rectRow.x + 5,
+      rectRow.y + 5,
+      rectRow.width - 10,
+      rectRow.height - 10
+    )
+    .fill();
+
+  doc.fillColor("black");
+}
+
+  // Bordure extérieure de la ligne
+  doc
+    .lineWidth(0.8)
+    .rect(
+      rectRow.x,
+      rectRow.y,
+      rectRow.width,
+      rectRow.height
+    )
+    .stroke();
+},
       }
     );
 
