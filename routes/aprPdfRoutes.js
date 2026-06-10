@@ -78,18 +78,12 @@ router.get("/generate/:id", async (req, res) => {
         .replace(/\n/g, "\n• "),
       (row.consequences || "")
         .replace(/\n/g, "\n• "),
-      {
-  type: "risk",
-  value: row.initial_risk || ""
-},
+       row.initial_risk || "",
       (row.existing_measures || "")
         .replace(/\t/g, " ")
         .replace(/-\s*/g, "• ")
         .replace(/\n/g, "\n"),
-      {
-  type: "risk",
-  value: row.residual_risk || ""
-},
+      row.residual_risk || "",
       row.scenario || "",
     ]);
 
@@ -138,24 +132,24 @@ router.get("/generate/:id", async (req, res) => {
       },
       {
         x: 15,
-        width: 820, // optimisé pour A3 paysage lisible
+        width: 1120, 
 
         columnsSize: [
-          50,   // Bloc
-          90,   // Installation
-          100,  // Opération
-          90,   // Produit
-          120,  // Évènement
-          140,  // Causes
-          120,  // Phénomène
-          140,  // Conséquences
-          70,   // Risque
-          180,  // Mesures
-          90,   // Risque résiduel
-          80,   // Scénario
-        ],
+70,   // Bloc
+100,  // Installation
+110,  // Opération
+90,   // Produit
+120,  // Evènement
+160,  // Causes
+130,  // Phénomène
+160,  // Conséquences
+80,   // Risque
+200,  // Mesures
+90,   // Risque Résiduel
+90    // Scénario
+],
 
-        padding: 10, // 🔥 AUGMENTE LA HAUTEUR VISUELLE
+        padding: 15, 
         divider: {
   header: { disabled: false, width: 1 },
   horizontal: { disabled: false, width: 1 },
