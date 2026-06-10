@@ -57,9 +57,9 @@ console.log(report.data);
           : report.data;
 
       const doc = new PDFDocument({
-  size: "A2",
+  size: "A3",
   layout: "landscape",
-  margin: 20,
+  margin: 15,
 });
 
       const buffers = [];
@@ -107,9 +107,11 @@ console.log(report.data);
   row.initial_risk || "",
 
   (row.existing_measures || "")
-    .replace(/\t/g, " ")
-    .replace(/-\s*/g, "• ")
-    .replace(/\n/g, "\n"),
+  .replace(/\t/g, "")
+  .replace(/-\s*/g, "• ")
+  .replace(/Â/g, "")
+  .replace(/Ã/g, "")
+  .replace(/\n+/g, "\n"),
 
   row.residual_risk || "",
 
@@ -171,50 +173,52 @@ doc.moveDown(2);
 
     rows
   },
-
   {
     x: 15,
 
     width: 1600,
 
     columnsSize: [
-      60,   // Bloc
-      130,  // Installation
-      140,  // Opération
-      120,  // Produit
-      160,  // Evènement
-      170,  // Causes
-      140,  // Phénomène
-      170,  // Conséquences
-      80,   // Risque
-      220,  // Mesures
-      100,  // Risque résiduel
-      80    // Scenario
+      70,
+      150,
+      160,
+      130,
+      180,
+      190,
+      160,
+      190,
+      90,
+      260,
+      110,
+      90
     ],
 
-    padding: 5,
+    padding: 10,
+
+    minRowHeight: 55,
 
     prepareHeader: () => {
 
       doc
         .font("Helvetica-Bold")
-        .fontSize(10);
+        .fontSize(11);
 
     },
 
     prepareRow: (
       row,
-      indexColumn,
-      indexRow,
+      columnIndex,
+      rowIndex,
       rectRow
     ) => {
 
       doc
         .font("Helvetica")
-        .fontSize(8);
+        .fontSize(9);
 
+      // Bordures épaisses
       doc
-        .lineWidth(0.8)
+        .lineWidth(1)
         .rect(
           rectRow.x,
           rectRow.y,
@@ -222,6 +226,167 @@ doc.moveDown(2);
           rectRow.height
         )
         .stroke();
+
+      // Couleur Risque
+      if (columnIndex === 8) {
+
+        const risk =
+          String(row[8] || "")
+            .toUpperCase();
+
+        if (risk.includes("RED")) {
+
+          doc
+            .save()
+            .fillColor("#FF0000")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+        else if (
+          risk.includes("ORANGE") ||
+          risk.includes("HIGH")
+        ) {
+
+          doc
+            .save()
+            .fillColor("#F28C28")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+        else if (
+          risk.includes("YELLOW") ||
+          risk.includes("MEDIUM")
+        ) {
+
+          doc
+            .save()
+            .fillColor("#FFFF00")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+        else if (
+          risk.includes("GREEN") ||
+          risk.includes("LOW")
+        ) {
+
+          doc
+            .save()
+            .fillColor("#00FF00")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+      }
+
+      // Couleur Risque Résiduel
+      if (columnIndex === 10) {
+
+        const risk =
+          String(row[10] || "")
+            .toUpperCase();
+
+        if (risk.includes("RED")) {
+
+          doc
+            .save()
+            .fillColor("#FF0000")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+        else if (
+          risk.includes("ORANGE")
+        ) {
+
+          doc
+            .save()
+            .fillColor("#F28C28")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+        else if (
+          risk.includes("YELLOW")
+        ) {
+
+          doc
+            .save()
+            .fillColor("#FFFF00")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+        else if (
+          risk.includes("GREEN")
+        ) {
+
+          doc
+            .save()
+            .fillColor("#00FF00")
+            .rect(
+              rectRow.x,
+              rectRow.y,
+              rectRow.width,
+              rectRow.height
+            )
+            .fill()
+            .restore();
+
+        }
+
+      }
 
     }
 
