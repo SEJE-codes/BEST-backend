@@ -94,6 +94,7 @@ router.get("/generate/:id", async (req, res) => {
     ]);
 
     console.log("ROWS COUNT:", rows.length);
+
     function getRiskColor(risk) {
   if (!risk) return "#FFFFFF";
 
@@ -169,7 +170,18 @@ router.get("/generate/:id", async (req, res) => {
     .font("Helvetica")
     .fontSize(8);
 
-  const riskColumn = 8;
+  // Bordure extérieure de la ligne
+  doc
+    .lineWidth(0.8)
+    .rect(
+      rectRow.x,
+      rectRow.y,
+      rectRow.width,
+      rectRow.height
+    )
+    .stroke();
+
+    const riskColumn = 8;
 const residualRiskColumn = 10;
 
 if (
@@ -209,17 +221,6 @@ if (
 
   doc.fillColor("black");
 }
-
-  // Bordure extérieure de la ligne
-  doc
-    .lineWidth(0.8)
-    .rect(
-      rectRow.x,
-      rectRow.y,
-      rectRow.width,
-      rectRow.height
-    )
-    .stroke();
 },
       }
     );
