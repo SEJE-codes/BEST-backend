@@ -46,6 +46,8 @@ router.get(
 
       const report =
         reports[0];
+        console.log("REPORT DATA:");
+console.log(report.data);
 
       const tableData =
         typeof report.data ===
@@ -111,7 +113,8 @@ router.get(
   row.scenario || ""
 
 ]);
-
+console.log("ROWS COUNT:", rows.length);
+console.log(rows);
 const table = {
 
   headers: [
