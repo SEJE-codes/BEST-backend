@@ -56,13 +56,11 @@ console.log(report.data);
             )
           : report.data;
 
-      const doc =
-        new PDFDocument({
-          size: "A3",
-          layout:
-            "landscape",
-          margin: 15,
-        });
+      const doc = new PDFDocument({
+  size: "A2",
+  layout: "landscape",
+  margin: 20,
+});
 
       const buffers = [];
 
@@ -97,15 +95,21 @@ console.log(report.data);
 
   row.central_event || "",
 
-  row.possible_causes || "",
+  (row.possible_causes || "")
+    .replace(/\n/g, "\n• "),
 
-  row.dangerous_phenomenon || "",
+  (row.dangerous_phenomenon || "")
+    .replace(/\n/g, "\n• "),
 
-  row.consequences || "",
+  (row.consequences || "")
+    .replace(/\n/g, "\n• "),
 
   row.initial_risk || "",
 
-  row.existing_measures || "",
+  (row.existing_measures || "")
+    .replace(/\t/g, " ")
+    .replace(/-\s*/g, "• ")
+    .replace(/\n/g, "\n"),
 
   row.residual_risk || "",
 
@@ -138,39 +142,63 @@ const table = {
 };
 doc.moveDown();
 
-doc.fontSize(12);
+doc.fontSize(10);
 
-doc.text("TEST AVANT TABLE");
-
-doc.moveDown();
-      await doc.table(
-  table,
+doc.text(
+  `Date de génération : ${new Date().toLocaleDateString()}`,
   {
+    align: "right"
+  }
+);
 
-    width: 1120,
+doc.moveDown(2);
+      await doc.table(
+  {
+    headers: [
+      "Bloc",
+      "Installation",
+      "Opération",
+      "Produit",
+      "Évènement",
+      "Causes",
+      "Phénomène",
+      "Conséquences",
+      "Risque",
+      "Mesures Existantes",
+      "Risque Résiduel",
+      "Scénario"
+    ],
+
+    rows
+  },
+
+  {
+    x: 15,
+
+    width: 1600,
 
     columnsSize: [
-
-      60,
-      90,
-      90,
-      80,
-      120,
-      120,
-      110,
-      120,
-      70,
-      120,
-      80,
-      60
-
+      60,   // Bloc
+      130,  // Installation
+      140,  // Opération
+      120,  // Produit
+      160,  // Evènement
+      170,  // Causes
+      140,  // Phénomène
+      170,  // Conséquences
+      80,   // Risque
+      220,  // Mesures
+      100,  // Risque résiduel
+      80    // Scenario
     ],
+
+    padding: 5,
 
     prepareHeader: () => {
 
       doc
         .font("Helvetica-Bold")
-        .fontSize(7);
+        .fontSize(10);
 
     },
 
@@ -183,17 +211,17 @@ doc.moveDown();
 
       doc
         .font("Helvetica")
-        .fontSize(6);
+        .fontSize(8);
 
-      doc.rect(
-
-        rectRow.x,
-        rectRow.y,
-
-        rectRow.width,
-        rectRow.height
-
-      ).stroke();
+      doc
+        .lineWidth(0.8)
+        .rect(
+          rectRow.x,
+          rectRow.y,
+          rectRow.width,
+          rectRow.height
+        )
+        .stroke();
 
     }
 
