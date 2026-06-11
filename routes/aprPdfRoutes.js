@@ -28,18 +28,18 @@ const HEADER_HEIGHT = 50;
 // ======================================================
 
 const columns = [
-  { key: "bloc", title: "Bloc", width: 55 },
-  { key: "installation", title: "Installation", width: 90 },
-  { key: "operation", title: "Operation", width: 100 },
-  { key: "product", title: "Produit", width: 80 },
-  { key: "central_event", title: "Evenement", width: 110 },
-  { key: "possible_causes", title: "Causes", width: 130 },
-  { key: "dangerous_phenomenon", title: "Phenomene", width: 110 },
-  { key: "consequences", title: "Consequences", width: 130 },
-  { key: "initial_color", title: "Risque", width: 70 },
-  { key: "existing_measures", title: "Mesures Existantes", width: 170 },
-  { key: "residual_color", title: "Risque Residuel", width: 70 },
-  { key: "scenario", title: "Scenario", width: 60 },
+  { key: "bloc", title: "Bloc", width: 50 },
+  { key: "installation", title: "Installation", width: 85 },
+  { key: "operation", title: "Operation", width: 95 },
+  { key: "product", title: "Produit", width: 75 },
+  { key: "central_event", title: "Evenement", width: 100 },
+  { key: "possible_causes", title: "Causes", width: 120 },
+  { key: "dangerous_phenomenon", title: "Phenomene", width: 100 },
+  { key: "consequences", title: "Consequences", width: 120 },
+  { key: "initial_color", title: "Risque", width: 65 },
+  { key: "existing_measures", title: "Mesures Existantes", width: 150 },
+  { key: "residual_color", title: "Risque Residuel", width: 65 },
+  { key: "scenario", title: "Scenario", width: 55 },
 ];
 
 // ======================================================
@@ -100,16 +100,46 @@ function calculateRowHeight(doc, row) {
 // ======================================================
 
 function drawHeader(doc, startX, startY) {
+
   let x = startX;
 
-  doc.font("Helvetica-Bold").fontSize(14);
-  columns.forEach((column) => {
-    doc.rect(x, startY, column.width, HEADER_HEIGHT).stroke();
+  doc.font("Helvetica-Bold");
+  doc.fontSize(11);
 
-    doc.text(column.title, x + 3, startY + 10, {
-      width: column.width - 6,
-      align: "center",
-    });
+  columns.forEach((column) => {
+
+    doc
+      .fillColor("#D9D9D9")
+      .rect(
+        x,
+        startY,
+        column.width,
+        HEADER_HEIGHT
+      )
+      .fill();
+
+    doc
+      .strokeColor("black")
+      .lineWidth(1.5)
+      .rect(
+        x,
+        startY,
+        column.width,
+        HEADER_HEIGHT
+      )
+      .stroke();
+
+    doc
+      .fillColor("black")
+      .text(
+        column.title,
+        x + 2,
+        startY + 15,
+        {
+          width: column.width - 4,
+          align: "center",
+        }
+      );
 
     x += column.width;
   });
@@ -124,7 +154,7 @@ function drawHeader(doc, startX, startY) {
 function drawRow(doc, row, startX, startY, rowHeight) {
   let x = startX;
 
-  doc.font("Helvetica").fontSize(13);
+  doc.font("Helvetica").fontSize(11);
 
   columns.forEach((column) => {
     const cellX = x;
@@ -138,7 +168,13 @@ function drawRow(doc, row, startX, startY, rowHeight) {
 
       doc.fillColor(color).rect(cellX, cellY, column.width, rowHeight).fill();
 
-      doc.strokeColor("black").rect(cellX, cellY, column.width, rowHeight).lineWidth(1.2)
+      doc.strokeColor("black").lineWidth(1.2)
+.rect(
+  cellX,
+  cellY,
+  column.width,
+  rowHeight
+)
 .stroke();
 
       x += column.width;
@@ -151,7 +187,7 @@ function drawRow(doc, row, startX, startY, rowHeight) {
       .rect(cellX, cellY, column.width, rowHeight)
       .stroke();
 
-    doc.fillColor("black").text(value, cellX + 4, cellY + 4, {
+    doc.fillColor("black").text(value, cellX + 4, cellY + 10, {
       width: column.width - 8,
       align: column.key === "scenario" ? "center" : "left",
     });
