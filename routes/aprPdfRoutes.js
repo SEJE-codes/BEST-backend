@@ -28,18 +28,18 @@ const HEADER_HEIGHT = 50;
 // ======================================================
 
 const columns = [
-  { key: "bloc", width: 55 },
-  { key: "installation", width: 90 },
-  { key: "operation", width: 100 },
-  { key: "product", width: 80 },
-  { key: "central_event", width: 110 },
-  { key: "possible_causes", width: 130 },
-  { key: "dangerous_phenomenon", width: 110 },
-  { key: "consequences", width: 130 },
-  { key: "initial_color", width: 70 },
-  { key: "existing_measures", width: 170 },
-  { key: "residual_color", width: 70 },
-  { key: "scenario", width: 60 },
+  { key: "bloc", title: "Bloc", width: 55 },
+  { key: "installation", title: "Installation", width: 90 },
+  { key: "operation", title: "Operation", width: 100 },
+  { key: "product", title: "Produit", width: 80 },
+  { key: "central_event", title: "Evenement", width: 110 },
+  { key: "possible_causes", title: "Causes", width: 130 },
+  { key: "dangerous_phenomenon", title: "Phenomene", width: 110 },
+  { key: "consequences", title: "Consequences", width: 130 },
+  { key: "initial_color", title: "Risque", width: 70 },
+  { key: "existing_measures", title: "Mesures Existantes", width: 170 },
+  { key: "residual_color", title: "Risque Residuel", width: 70 },
+  { key: "scenario", title: "Scenario", width: 60 },
 ];
 
 // ======================================================
@@ -77,7 +77,7 @@ function cleanText(text) {
 // ======================================================
 
 function calculateRowHeight(doc, row) {
-  let maxHeight = 70;
+  let maxHeight = 110;
 
   columns.forEach((column) => {
     if (column.key === "initial_color" || column.key === "residual_color") return;
@@ -92,7 +92,7 @@ function calculateRowHeight(doc, row) {
     maxHeight = Math.max(maxHeight, textHeight);
   });
 
-  return maxHeight + 20;
+  return maxHeight + 35;
 }
 
 // ======================================================
@@ -102,7 +102,7 @@ function calculateRowHeight(doc, row) {
 function drawHeader(doc, startX, startY) {
   let x = startX;
 
-  doc.font("Helvetica-Bold").fontSize(11);
+  doc.font("Helvetica-Bold").fontSize(14);
   columns.forEach((column) => {
     doc.rect(x, startY, column.width, HEADER_HEIGHT).stroke();
 
@@ -124,7 +124,7 @@ function drawHeader(doc, startX, startY) {
 function drawRow(doc, row, startX, startY, rowHeight) {
   let x = startX;
 
-  doc.font("Helvetica").fontSize(10);
+  doc.font("Helvetica").fontSize(13);
 
   columns.forEach((column) => {
     const cellX = x;
@@ -211,7 +211,7 @@ router.get("/generate/:id", async (req, res) => {
     doc.on("data", (chunk) => buffers.push(chunk));
 
     // TITLE
-    doc.font("Helvetica-Bold").fontSize(22);
+    doc.font("Helvetica-Bold").fontSize(28);
     doc.text(`APR REPORT - ${report.zone}`, { align: "center" });
     doc.moveDown();
 
